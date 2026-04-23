@@ -230,7 +230,7 @@ async function runExperiment() {
         const experimentTrials = createExperimentTrials(experiment);
 
         timeline = [
-            //consent,
+            consent,
             preload,
             training_instructions,
             ...trainingTrials,
