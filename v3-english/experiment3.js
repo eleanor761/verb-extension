@@ -97,7 +97,6 @@ function createTrainingTrials(trainingData) {
             post_trial_gap: 500,
             correct_choice: trial.word,
             feedback_duration: 600,
-            button_html: '<button class="jspsych-btn" style="margin: 8px 16px; padding: 10px 28px; font-size: 1.1em;">%choice%</button>',
             prompt: 'Which word matches the action in the video?',
             data: {
                 subCode: participant_id,
@@ -139,7 +138,6 @@ function createExperimentTrials(experimentData) {
             autoplay: true,
             loop: true,
             post_trial_gap: 500,
-            button_html: '<button class="jspsych-btn" style="margin: 8px 16px; padding: 10px 28px; font-size: 1.1em;">%choice%</button>',
             prompt: 'Which word matches the action in the video?',
             data: {
                 subCode: participant_id,
@@ -237,6 +235,20 @@ const completion_code_trial = {
 async function runExperiment() {
     try {
         console.log('Starting experiment. Participant:', participant_id);
+
+        // Inject button spacing styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .jspsych-video-button-response-button {
+                display: inline-block;
+                margin: 12px 20px;
+            }
+            .jspsych-video-button-response-button button {
+                padding: 10px 32px;
+                font-size: 1.1em;
+            }
+        `;
+        document.head.appendChild(style);
 
         const { training, experiment } = await loadTrials();
         console.log('Training trials:', training.length, '| Experiment trials:', experiment.length);
