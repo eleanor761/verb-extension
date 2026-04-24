@@ -1,5 +1,13 @@
-// Generate participant ID at the start
-let participant_id = `participant${Math.floor(Math.random() * 999) + 1}`;
+// Use SONA participant ID if passed in URL (?id=XXXX), otherwise generate a random one
+const urlParams = new URLSearchParams(window.location.search);
+const sonaId = urlParams.get('id');
+let participant_id = sonaId ? `sona_${sonaId}` : `participant${Math.floor(Math.random() * 999) + 1}`;
+
+// Pre-instantiate audio to avoid playback delay on first use
+const bleepSound = new Audio('../stimuli/bleep.wav');
+const buzzSound = new Audio('../stimuli/buzz.wav');
+bleepSound.load();
+buzzSound.load();
 const completion_code = generateRandomString(3) + 'zvz' + generateRandomString(3);
 
 function generateRandomString(length) {
@@ -89,6 +97,7 @@ function createTrainingTrials(trainingData) {
             post_trial_gap: 500,
             correct_choice: trial.word,
             feedback_duration: 600,
+            button_html: '<button class="jspsych-btn" style="margin: 8px 16px; padding: 10px 28px; font-size: 1.1em;">%choice%</button>',
             prompt: 'Which word matches the action in the video?',
             data: {
                 subCode: participant_id,
@@ -107,9 +116,11 @@ function createTrainingTrials(trainingData) {
                 data.correct = (data.selected === data.word) ? 1 : 0;
 
                 if (data.correct === 1) {
-                    new Audio('../stimuli/bleep.wav').play();
+                    bleepSound.currentTime = 0;
+                    bleepSound.play();
                 } else {
-                    new Audio('../stimuli/buzz.wav').play();
+                    buzzSound.currentTime = 0;
+                    buzzSound.play();
                 }
             }
         };
@@ -128,6 +139,7 @@ function createExperimentTrials(experimentData) {
             autoplay: true,
             loop: true,
             post_trial_gap: 500,
+            button_html: '<button class="jspsych-btn" style="margin: 8px 16px; padding: 10px 28px; font-size: 1.1em;">%choice%</button>',
             prompt: 'Which word matches the action in the video?',
             data: {
                 subCode: participant_id,
