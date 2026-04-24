@@ -52,8 +52,9 @@ const consent = {
 const training_instructions = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
-        <p>In this task, you will be learning new words for a collection of actions.</p>
+        <p>In this task, you will be learning words for a collection of actions.</p>
         <p>For each trial, click the word that matches the video.</p>
+        <p>You will be receiving auditory feedback on your responses during this section. Please turn the volume up on your device.</p>
         <p>If your response is correct, you will hear a beep. If it is wrong, you will hear a buzz.</p>
         <p>Please do your best to be as accurate as possible.</p>
         <p>Press any key to begin.</p>
@@ -86,6 +87,8 @@ function createTrainingTrials(trainingData) {
             autoplay: true,
             loop: true,
             post_trial_gap: 500,
+            correct_choice: trial.word,
+            feedback_duration: 600,
             prompt: 'Which word matches the action in the video?',
             data: {
                 subCode: participant_id,
@@ -154,7 +157,7 @@ const preload = {
 
 function getFilteredData() {
     const trials = jsPsych.data.get().values()
-        .filter(trial => trial.trial_type === 'training' || trial.trial_type === 'experiment');
+        .filter(trial => trial.stage === 'training' || trial.stage === 'experiment');
 
     if (trials.length === 0) {
         console.error("No trials found!");
