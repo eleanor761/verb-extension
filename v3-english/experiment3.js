@@ -61,19 +61,19 @@ const training_instructions = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
         <p>In this task, you will be learning words for a collection of actions.</p>
-        <p>For each trial, click the word that matches the video.</p>
-        <p>You will be receiving auditory feedback on your responses during this section. Please turn the volume up on your device.</p>
-        <p>If your response is correct, you will hear a beep. If it is wrong, you will hear a buzz.</p>
+        <p>On each trial, a short video will play. Click the word that best matches the action in the video.</p>
+        <p>You will receive sound feedback after each response, so please make sure your volume is turned up.</p>
+        <p>A correct response will be followed by a beep; an incorrect response will be followed by a buzz.</p>
         <p>Please do your best to be as accurate as possible.</p>
-        <p>Press any key to begin. The experiment may take more than a few seconds to load.</p>
+        <p>Press any key to begin. Please be patient — the experiment may take a few moments to load.</p>
     `,
 };
 
 const experiment_instructions = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
-        <p>This next task is just like the previous section, but this time you will not hear any feedback.</p>
-        <p>Please click the word that matches the action in the video.</p>
+        <p>Great work! Now you will continue with the same task, but without any sound feedback.</p>
+        <p>As before, click the word that best matches the action in the video.</p>
         <p>Press any key to begin.</p>
     `,
 };
@@ -163,9 +163,8 @@ function createExperimentTrials(experimentData) {
 
 const preload = {
     type: jsPsychPreload,
-    auto_preload: true,
+    auto_preload: false,
     audio: ['../stimuli/bleep.wav', '../stimuli/buzz.wav']
-    
 };
 
 function getFilteredData() {
