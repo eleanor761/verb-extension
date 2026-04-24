@@ -49,10 +49,22 @@ const consent = {
     }
 };
 
-const instructions = {
+const training_instructions = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
-        <p>In this experiment, you will see a video and will be asked to respond with a single word describing what is happening.</p>
+        <p>In this task, you will be learning words for a collection of actions.</p>
+        <p>For each trial, click the word that matches the video.</p>
+        <p>You will be receiving auditory feedback on your responses during this section. Please turn the volume up on your device.</p>
+        <p>If your response is correct, you will hear a beep. If it is wrong, you will hear a buzz.</p>
+        <p>Please do your best to be as accurate as possible.</p>
+        <p>Press any key to begin. The experiment may take more than a few seconds to load.</p>
+    `,
+};
+const experiment_instructions = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `
+        <p>In this task, you will be asked to write the single word that best describes what is happening in the video.</p>
+        <p>Try to be as precise as possible, but there are no right or wrong answers.</p>
         <p>Press any key to begin.</p>
     `,
 };
@@ -73,6 +85,8 @@ function createTrainingTrials(trainingData) {
             autoplay: true,
             loop: true,
             post_trial_gap: 500,
+            correct_choice: trial.word,
+            feedback_duration: 600,
             prompt: 'Which word matches the action in the video?',
             data: {
                 subCode: participant_id,
@@ -128,16 +142,25 @@ function createExperimentTrials(experimentData) {
             stage: 'experiment',
             trial_type: 'video-word-response'
         },
+        on_load: function() {
+            const submitBtn = document.querySelector('#jspsych-survey-text-next');
+            const video = document.querySelector('video');
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+
+            let playedOnce = false;
+            video.addEventListener('timeupdate', function() {
+                if (!playedOnce && video.currentTime > 0 && video.duration > 0 &&
+                    video.duration - video.currentTime < 0.5) {
+                    playedOnce = true;
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                }
+            });
+        },
         on_finish: function(data) {
             data.rt = Math.round(data.rt);
             data.word_response = data.response.word_response;
-
-            console.log(`Trial ${data.trial_num} completed:`, {
-                trial_num: data.trial_num,
-                word: data.word,
-                rt: data.rt,
-                word_response: data.word_response
-            });
         }
     }));
 }
@@ -158,7 +181,7 @@ function createDefinitionPrompts(words) {
         data: {
             subCode: participant_id,
             word: word,
-            trial_type: 'definition'
+            stage: 'definition'
         },
         on_finish: function(data) {
             data.rt = Math.round(data.rt);
@@ -178,9 +201,9 @@ const preload = {
 function getFilteredData() {
     const allTrials = jsPsych.data.get().values();
     const trials = allTrials.filter(trial =>
-        trial.trial_type === 'training' ||
-        trial.trial_type === 'video-word-response' ||
-        trial.trial_type === 'definition'
+        trial.stage === 'training' ||
+        trial.stage === 'experiment' ||
+        trial.stage === 'definition'
     );
 
     if (trials.length === 0) {
@@ -189,7 +212,7 @@ function getFilteredData() {
     }
 
     try {
-        const columns = ['subCode', 'trial_type', 'trial_num', 'word', 'dimension', 'filename', 'opponent', 'stage', 'rt', 'selected', 'correct', 'word_response', 'definition'];
+        const columns = ['subCode', 'stage', 'trial_num', 'word', 'dimension', 'filename', 'opponent', 'rt', 'selected', 'correct', 'word_response', 'definition'];
 
         const header = columns.join(',');
 
@@ -261,9 +284,10 @@ async function runExperiment() {
 
         timeline = [
             consent,
-            instructions,
+            training_instructions,
             preload,
             ...trainingTrials,
+            experiment_instructions,
             ...experimentTrials,
             ...definitionPrompts,
             save_data,

@@ -133,6 +133,18 @@ var jsPsychVideoButtonResponse = (function (jspsych) {
         pretty_name: 'Time After Video',
         default: 0,
         description: 'Time after the video has ended, for recording rt',
+      },
+      /** The correct button label — used to show green/red feedback */
+      correct_choice: {
+        type: jspsych.ParameterType.STRING,
+        default: null,
+        description: 'The label of the correct choice. If set, visual feedback is shown.'
+      },
+      /** How long (ms) to show the colored border before advancing */
+      feedback_duration: {
+        type: jspsych.ParameterType.INT,
+        default: 0,
+        description: 'Duration in ms to display visual feedback after a response.'
       }
     }
   };
@@ -271,25 +283,34 @@ var jsPsychVideoButtonResponse = (function (jspsych) {
       
       // Handle button clicks
       leftButton.addEventListener('click', function() {
-        end_trial(0);
+        respond(0, leftButton);
       });
       rightButton.addEventListener('click', function() {
-        end_trial(1);
+        respond(1, rightButton);
       });
+
+      function respond(buttonIndex, buttonElement) {
+        leftButton.disabled = true;
+        rightButton.disabled = true;
+
+        if (trial.correct_choice !== null && trial.feedback_duration > 0) {
+          const isCorrect = trial.choices[buttonIndex] === trial.correct_choice;
+          buttonElement.style.outline = isCorrect
+            ? '4px solid #2e7d32'
+            : '4px solid #c62828';
+          buttonElement.style.backgroundColor = isCorrect ? '#e8f5e9' : '#ffebee';
+          setTimeout(() => end_trial(buttonIndex), trial.feedback_duration);
+        } else {
+          end_trial(buttonIndex);
+        }
+      }
 
       // Function to end trial
       function end_trial(button) {
-        console.log('End trial called');
-
-        let reaction_time = null;
-        if (start_time !== null) {
-          reaction_time = performance.now() - start_time;
-        }
-        
         const trial_data = {
           rt: performance.now() - start_time,
           stimulus: trial.stimulus,
-          response: button, // Record which button was pressed
+          response: button,
           trial_type: 'video-button-response'
         };
 

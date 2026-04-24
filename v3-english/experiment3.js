@@ -57,7 +57,7 @@ const training_instructions = {
         <p>You will be receiving auditory feedback on your responses during this section. Please turn the volume up on your device.</p>
         <p>If your response is correct, you will hear a beep. If it is wrong, you will hear a buzz.</p>
         <p>Please do your best to be as accurate as possible.</p>
-        <p>Press any key to begin.</p>
+        <p>Press any key to begin. The experiment may take more than a few seconds to load.</p>
     `,
 };
 
@@ -153,6 +153,7 @@ const preload = {
     type: jsPsychPreload,
     auto_preload: true,
     audio: ['../stimuli/bleep.wav', '../stimuli/buzz.wav']
+    
 };
 
 function getFilteredData() {
@@ -234,8 +235,8 @@ async function runExperiment() {
 
         timeline = [
             consent,
-            preload,
             training_instructions,
+            preload,
             ...trainingTrials,
             experiment_instructions,
             ...experimentTrials,
