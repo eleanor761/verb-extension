@@ -322,8 +322,16 @@ async function loadTrials() {
 
         const allData = results.data;
 
+        const trainingByWord = {};
+        allData.filter(t => t.stage === 'training').forEach(t => {
+            if (!trainingByWord[t.word]) trainingByWord[t.word] = [];
+            trainingByWord[t.word].push(t);
+        });
+
         const training = jsPsych.randomization.shuffle(
-            allData.filter(t => t.stage === 'training')
+            Object.values(trainingByWord).flatMap(trials =>
+                jsPsych.randomization.shuffle(trials).slice(0, 6)
+            )
         ).map((t, i) => ({ ...t, trial_num: i }));
 
         const experiment = jsPsych.randomization.shuffle(
