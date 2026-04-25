@@ -1,6 +1,7 @@
 // Generate participant ID at the start
 let participant_id = `participant${Math.floor(Math.random() * 999) + 1}`;
 const completion_code = generateRandomString(3) + 'zvz' + generateRandomString(3);
+const sona_id = new URLSearchParams(window.location.search).get('sona_id') || '';
 
 function generateRandomString(length) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -14,6 +15,8 @@ function generateRandomString(length) {
 const jsPsych = new jsPsychModule.JsPsych({
   show_progress_bar: false
 });
+
+jsPsych.data.addProperties({ sona_id: sona_id });
 
 let timeline = [];
 
@@ -64,8 +67,8 @@ const training_instructions = {
 const experiment_instructions = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
-        <p>This next task is just like the previous section, but this time you will not hear any feedback.</p>
-        <p>Please click the word that matches the action in the video.</p>
+        <p>In this task, you will be asked to write the single word that best describes what is happening in the video.</p>
+        <p>Try to be as precise as possible, but there are no right or wrong answers.</p>
         <p>Press any key to begin.</p>
     `,
 };
@@ -117,36 +120,53 @@ function createTrainingTrials(trainingData) {
 }
 
 function createExperimentTrials(experimentData) {
-    return experimentData.map(trial => {
-        const choices = jsPsych.randomization.shuffle([trial.word, trial.opponent]);
-        return {
-            type: jsPsychVideoButtonResponse,
-            stimulus: [getVideoPath(trial.filename)],
-            choices: choices,
-            width: 640,
-            height: 480,
-            autoplay: true,
-            loop: true,
-            post_trial_gap: 500,
-            prompt: 'Which word matches the action in the video?',
-            data: {
-                subCode: participant_id,
-                trial_num: trial.trial_num,
-                word: trial.word,
-                dimension: trial.dimension,
-                filename: trial.filename,
-                opponent: trial.opponent,
-                stage: 'experiment',
-                trial_type: 'experiment',
-                choices: choices
-            },
-            on_finish: function(data) {
-                data.rt = Math.round(data.rt);
-                data.selected = data.choices[data.response];
-                data.correct = (data.selected === data.word) ? 1 : 0;
+    return experimentData.map(trial => ({
+        type: jsPsychSurveyText,
+        preamble: `
+            <video width="640" height="480" autoplay loop>
+                <source src="${getVideoPath(trial.filename)}" type="video/mp4">
+            </video>
+        `,
+        questions: [
+            {
+                prompt: 'What single word best describes what is happening in the video?',
+                rows: 1,
+                columns: 40,
+                required: true,
+                name: 'word_response'
             }
-        };
-    });
+        ],
+        button_label: 'Submit',
+        data: {
+            subCode: participant_id,
+            trial_num: trial.trial_num,
+            word: trial.word,
+            dimension: trial.dimension,
+            filename: trial.filename,
+            opponent: trial.opponent,
+            stage: 'experiment'
+        },
+        on_load: function() {
+            const submitBtn = document.querySelector('#jspsych-survey-text-next');
+            const video = document.querySelector('video');
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+
+            let playedOnce = false;
+            video.addEventListener('timeupdate', function() {
+                if (!playedOnce && video.currentTime > 0 && video.duration > 0 &&
+                    video.duration - video.currentTime < 0.5) {
+                    playedOnce = true;
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                }
+            });
+        },
+        on_finish: function(data) {
+            data.rt = Math.round(data.rt);
+            data.word_response = data.response.word_response;
+        }
+    }));
 }
 
 const preload = {
@@ -166,7 +186,7 @@ function getFilteredData() {
     }
 
     try {
-        const columns = ['subCode', 'trial_type', 'trial_num', 'word', 'dimension', 'filename', 'opponent', 'stage', 'rt', 'selected', 'correct'];
+        const columns = ['subCode', 'sona_id', 'stage', 'trial_num', 'word', 'dimension', 'filename', 'opponent', 'rt', 'selected', 'correct', 'word_response'];
 
         const header = columns.join(',');
 
@@ -211,8 +231,6 @@ const completion_code_trial = {
     stimulus: function() {
         return `
             <p>You have completed the main experiment!</p>
-            <p>Your completion code is: <strong>${completion_code}</strong></p>
-            <p>Please make a note of this code - you will need to enter it in SONA to receive credit.</p>
             <p>You can close the page now.</p>
         `;
     },
@@ -230,16 +248,16 @@ async function runExperiment() {
         const { training, experiment } = await loadTrials();
         console.log('Training trials:', training.length, '| Experiment trials:', experiment.length);
 
-        const trainingTrials = createTrainingTrials(training);
+        const trainingTrials = createTrainingTrials(training).slice(0,1);
         const experimentTrials = createExperimentTrials(experiment);
 
         timeline = [
-            consent,
-            training_instructions,
+            //consent,
+            //training_instructions,
             preload,
             ...trainingTrials,
             experiment_instructions,
-            ...experimentTrials,
+            //...experimentTrials,
             save_data,
             completion_code_trial
         ];

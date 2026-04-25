@@ -1,6 +1,7 @@
 // Generate participant ID at the start
 let participant_id = `participant${Math.floor(Math.random() * 999) + 1}`;
 const completion_code = generateRandomString(3) + 'zvz' + generateRandomString(3);
+const sona_id = new URLSearchParams(window.location.search).get('sona_id') || '';
 
 function generateRandomString(length) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -14,6 +15,8 @@ function generateRandomString(length) {
 const jsPsych = new jsPsychModule.JsPsych({
   show_progress_bar: false
 });
+
+jsPsych.data.addProperties({ sona_id: sona_id });
 
 let timeline = [];
 
@@ -170,7 +173,7 @@ function createDefinitionPrompts(words) {
         type: jsPsychSurveyText,
         questions: [
             {
-                prompt: `What do you think the word <strong>${word}</strong> means? Please write a brief definition.`,
+                prompt: `What do you think the word <strong>${word}</strong> means? Pleas think of all the ways the action could be generalized, and write a brief definition.`,
                 rows: 3,
                 columns: 60,
                 required: true,
@@ -212,7 +215,7 @@ function getFilteredData() {
     }
 
     try {
-        const columns = ['subCode', 'stage', 'trial_num', 'word', 'dimension', 'filename', 'opponent', 'rt', 'selected', 'correct', 'word_response', 'definition'];
+        const columns = ['subCode', 'sona_id', 'stage', 'trial_num', 'word', 'dimension', 'filename', 'opponent', 'rt', 'selected', 'correct', 'word_response', 'definition'];
 
         const header = columns.join(',');
 
@@ -257,8 +260,6 @@ const completion_code_trial = {
     stimulus: function() {
         return `
             <p>You have completed the main experiment!</p>
-            <p>Your completion code is: <strong>${completion_code}</strong></p>
-            <p>Please make a note of this code - you will need to enter it in SONA to receive credit.</p>
             <p>You can close the page now.</p>
         `;
     },
