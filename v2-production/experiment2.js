@@ -3,6 +3,11 @@ let participant_id = `participant${Math.floor(Math.random() * 999) + 1}`;
 const completion_code = generateRandomString(3) + 'zvz' + generateRandomString(3);
 const sona_id = new URLSearchParams(window.location.search).get('sona_id') || '';
 
+const bleepSound = new Audio('../stimuli/bleep.wav');
+const buzzSound = new Audio('../stimuli/buzz.wav');
+bleepSound.load();
+buzzSound.load();
+
 function generateRandomString(length) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
@@ -102,16 +107,22 @@ function createTrainingTrials(trainingData) {
                 trial_type: 'training',
                 choices: choices
             },
+            on_load: function() {
+                const leftBtn = document.querySelector('#jspsych-video-button-response-left');
+                const rightBtn = document.querySelector('#jspsych-video-button-response-right');
+                leftBtn.addEventListener('click', function() {
+                    (choices[0] === trial.word ? bleepSound : buzzSound).currentTime = 0;
+                    (choices[0] === trial.word ? bleepSound : buzzSound).play();
+                });
+                rightBtn.addEventListener('click', function() {
+                    (choices[1] === trial.word ? bleepSound : buzzSound).currentTime = 0;
+                    (choices[1] === trial.word ? bleepSound : buzzSound).play();
+                });
+            },
             on_finish: function(data) {
                 data.rt = Math.round(data.rt);
                 data.selected = data.choices[data.response];
                 data.correct = (data.selected === data.word) ? 1 : 0;
-
-                if (data.correct === 1) {
-                    new Audio('../stimuli/bleep.wav').play();
-                } else {
-                    new Audio('../stimuli/buzz.wav').play();
-                }
             }
         };
     });

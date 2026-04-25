@@ -112,18 +112,22 @@ function createTrainingTrials(trainingData) {
                 trial_type: 'training',
                 choices: choices
             },
+            on_load: function() {
+                const leftBtn = document.querySelector('#jspsych-video-button-response-left');
+                const rightBtn = document.querySelector('#jspsych-video-button-response-right');
+                leftBtn.addEventListener('click', function() {
+                    (choices[0] === trial.word ? bleepSound : buzzSound).currentTime = 0;
+                    (choices[0] === trial.word ? bleepSound : buzzSound).play();
+                });
+                rightBtn.addEventListener('click', function() {
+                    (choices[1] === trial.word ? bleepSound : buzzSound).currentTime = 0;
+                    (choices[1] === trial.word ? bleepSound : buzzSound).play();
+                });
+            },
             on_finish: function(data) {
                 data.rt = Math.round(data.rt);
                 data.selected = data.choices[data.response];
                 data.correct = (data.selected === data.word) ? 1 : 0;
-
-                if (data.correct === 1) {
-                    bleepSound.currentTime = 0;
-                    bleepSound.play();
-                } else {
-                    buzzSound.currentTime = 0;
-                    buzzSound.play();
-                }
             }
         };
     });
