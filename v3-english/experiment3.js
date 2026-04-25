@@ -137,7 +137,7 @@ function createExperimentTrials(experimentData) {
     return experimentData.map(trial => ({
         type: jsPsychSurveyText,
         preamble: `
-            <video width="640" height="480" autoplay loop>
+            <video width="640" height="480" autoplay loop muted>
                 <source src="${getVideoPath(trial.filename)}" type="video/mp4">
             </video>
         `,
