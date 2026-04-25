@@ -1,5 +1,13 @@
-// Generate participant ID at the start
-let participant_id = `participant${Math.floor(Math.random() * 999) + 1}`;
+// Use SONA participant ID if passed in URL (?id=XXXX), otherwise generate a random one
+const urlParams = new URLSearchParams(window.location.search);
+const sonaId = urlParams.get('id');
+let participant_id = sonaId ? `sona_${sonaId}` : `participant${Math.floor(Math.random() * 999) + 1}`;
+
+// Pre-instantiate audio to avoid playback delay on first use
+const bleepSound = new Audio('../stimuli/bleep.wav');
+const buzzSound = new Audio('../stimuli/buzz.wav');
+bleepSound.load();
+buzzSound.load();
 const completion_code = generateRandomString(3) + 'zvz' + generateRandomString(3);
 const sona_id = new URLSearchParams(window.location.search).get('sona_id') || '';
 
@@ -56,11 +64,11 @@ const training_instructions = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
         <p>In this task, you will be learning words for a collection of actions.</p>
-        <p>For each trial, click the word that matches the video.</p>
-        <p>You will be receiving auditory feedback on your responses during this section. Please turn the volume up on your device.</p>
-        <p>If your response is correct, you will hear a beep. If it is wrong, you will hear a buzz.</p>
+        <p>On each trial, a short video will play. Click the word that best matches the action in the video.</p>
+        <p>You will receive sound feedback after each response, so please make sure your volume is turned up.</p>
+        <p>A correct response will be followed by a beep; an incorrect response will be followed by a buzz.</p>
         <p>Please do your best to be as accurate as possible.</p>
-        <p>Press any key to begin. The experiment may take more than a few seconds to load.</p>
+        <p>Press any key to begin. Please be patient — the experiment may take a few moments to load.</p>
     `,
 };
 
@@ -110,9 +118,11 @@ function createTrainingTrials(trainingData) {
                 data.correct = (data.selected === data.word) ? 1 : 0;
 
                 if (data.correct === 1) {
-                    new Audio('../stimuli/bleep.wav').play();
+                    bleepSound.currentTime = 0;
+                    bleepSound.play();
                 } else {
-                    new Audio('../stimuli/buzz.wav').play();
+                    buzzSound.currentTime = 0;
+                    buzzSound.play();
                 }
             }
         };
@@ -171,9 +181,8 @@ function createExperimentTrials(experimentData) {
 
 const preload = {
     type: jsPsychPreload,
-    auto_preload: true,
+    auto_preload: false,
     audio: ['../stimuli/bleep.wav', '../stimuli/buzz.wav']
-    
 };
 
 function getFilteredData() {
@@ -244,6 +253,20 @@ const completion_code_trial = {
 async function runExperiment() {
     try {
         console.log('Starting experiment. Participant:', participant_id);
+
+        // Inject button spacing styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .jspsych-video-button-response-button {
+                display: inline-block;
+                margin: 12px 20px;
+            }
+            .jspsych-video-button-response-button button {
+                padding: 10px 32px;
+                font-size: 1.1em;
+            }
+        `;
+        document.head.appendChild(style);
 
         const { training, experiment } = await loadTrials();
         console.log('Training trials:', training.length, '| Experiment trials:', experiment.length);
