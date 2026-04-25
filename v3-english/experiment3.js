@@ -271,16 +271,16 @@ async function runExperiment() {
         const { training, experiment } = await loadTrials();
         console.log('Training trials:', training.length, '| Experiment trials:', experiment.length);
 
-        const trainingTrials = createTrainingTrials(training).slice(0,1);
+        const trainingTrials = createTrainingTrials(training);
         const experimentTrials = createExperimentTrials(experiment);
 
         timeline = [
-            //consent,
-            //training_instructions,
+            consent,
+            training_instructions,
             preload,
             ...trainingTrials,
             experiment_instructions,
-            //...experimentTrials,
+            ...experimentTrials,
             save_data,
             completion_code_trial
         ];
