@@ -201,7 +201,7 @@ function getFilteredData() {
 
         const rows = trials.map(trial => {
             return columns.map(column => {
-                const value = trial[column];
+                const value = column === 'sona_id' ? sona_id : trial[column];
                 if (value === null || value === undefined) {
                     return '';
                 } else if (typeof value === 'string') {
